@@ -133,3 +133,8 @@ Just add an entry for the `ez-ssh-bot.sh` script after `@include common-session`
 # Send a login notification to Telegram via ez-ssh-bot
 session optional pam_exec.so seteuid /etc/ssh/ez-ssh-bot.sh
 ```
+
+## Voilà!
+
+![ez-ssh-bot](https://user-images.githubusercontent.com/7307454/199520947-0c7dd8ba-807c-4e84-a17a-620936c4b2a1.gif)
+
