@@ -1,0 +1,14 @@
+[Unit]
+Description=SSH Reverse Tunnel with Login Notifications
+After=network-online.target
+
+[Service]
+Type=forking
+User=ez-ssh-bot
+ExecStart=/usr/bin/autossh -M 0 -N -f -q -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/ez-ssh-bot.pem -R 9033:localhost:22 ec2-user@<elastic IP>
+ExecStop=/usr/bin/pkill -9 -u ez-ssh-bot
+RestartSec=5
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
