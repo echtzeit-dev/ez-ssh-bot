@@ -2,6 +2,8 @@
 
 SSH Reverse Tunnel with Login Notifications via Telegram Bot
 
+![Diagram](ez-ssh-bot.png)
+
 ## Create a Telegram bot
 
 Contact [@BotFather](https://t.me/botfather) on Telegram and type `/start`. Then follow instructions to create a bot and get an access token. The token will look like this: `4098346289:YUI_OLIJi98y78078yyhi7ovghjoTGniuss`. It grants full control over your bot, so keep it private.
@@ -67,7 +69,7 @@ Create the user, set a password and copy over the `.pem` file for your EC2 insta
 > sudo chmod 600 /home/ez-ssh-bot/.ssh/ez-ssh-bot.pem
 ```
 
-Switch to the new user once to test the SSH connection and confirm the host. Here you will need the elastic IP address of your EC2 instance:
+Switch to the new user once in order to test the SSH connection and confirm the server fingerprint. Here you will need the elastic IP address of your EC2 instance:
 ```shell
 > su - ez-ssh-bot
 Password: ...
