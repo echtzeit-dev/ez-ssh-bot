@@ -60,13 +60,16 @@ This article will guide you through the configuration step by step &mdash; remem
 
 ## Create a dedicated user for AutoSSH
 
-Create the user, set a password and copy over the `.pem` file for your EC2 instance:
+Create the user, set a password, copy over the `.pem` file for your EC2 instance and make sure the `known_hosts` file exists:
 ```shell
 > sudo useradd -m ez-ssh-bot
 > sudo passwd ez-ssh-bot
+> sudo mkdir -p /home/ez-ssh-bot/.ssh
 > sudo cp /path/to/private/ec2-key.pem /home/ez-ssh-bot/.ssh/ez-ssh-bot.pem
 > sudo chown ez-ssh-bot /home/ez-ssh-bot/.ssh/ez-ssh-bot.pem
 > sudo chmod 600 /home/ez-ssh-bot/.ssh/ez-ssh-bot.pem
+> sudo touch /home/ez-ssh-bot/.ssh/known_hosts
+> sudo chown ez-ssh-bot /home/ez-ssh-bot/.ssh/known_hosts
 ```
 
 Switch to the new user once in order to test the SSH connection and confirm the server fingerprint. Here you will need the elastic IP address of your EC2 instance:
@@ -78,12 +81,17 @@ The authenticity of host '<elastic IP> (<elastic IP>)' can't be established.
 ECDSA key fingerprint is SHA256:VhApmMgDG00DVRlwAeFqmN3hDgtJZpvuvIV9Dy39gyk.
 Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
 [ec2-user@ip-172-31-43-51 ~]$ exit
+ez-ssh-bot> wc --chars /home/ez-ssh-bot/.ssh/known_hosts
+221 /home/ez-ssh-bot/.ssh/known_hosts
 ez-ssh-bot> exit
 ```
 
-Eventually, we can give the user a false shell to prevent logins:
+Eventually, we can give the user a false shell to prevent further logins:
 ```shell
 > sudo usermod -s /usr/sbin/nologin ez-ssh-bot
+> su - ez-ssh-bot
+Password: ...
+This account is currently not available.
 ```
 
 ## Create a Systemd service for AutoSSH
@@ -133,7 +141,7 @@ Just add an entry for the `ez-ssh-bot.sh` script after `@include common-session`
 ```shell
 > grep ez-ssh-bot /etc/pam.d/sshd
 # Send a login notification to Telegram via ez-ssh-bot
-session optional pam_exec.so seteuid /etc/ssh/ez-ssh-bot.sh
+session required pam_exec.so seteuid /etc/ssh/ez-ssh-bot.sh
 ```
 
 ## Voilà!
