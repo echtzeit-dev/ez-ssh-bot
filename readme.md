@@ -136,9 +136,9 @@ Nov 02 13:23:42 i7ubuntu systemd[1]: Started SSH Reverse Tunnel with Login Notif
 Nov 02 13:23:42 i7ubuntu autossh[2337706]: ssh child pid is 2337707
 ```
 
-We can now SSH into our local workstation from remote through our EC2 instance 🙌
+We can now SSH into the `user` account on our local workstation from a remote machine through our EC2 instance 🙌
 ```shell
-> ssh -i /path/to/private/ec2-key.pem -p 9033 user@<elastic IP>
+> ssh -p 9034 user@<elastic IP>
 ```
 
 Once that works, let Systemd start our service automatically at boot-time:
