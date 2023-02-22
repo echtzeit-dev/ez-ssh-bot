@@ -194,5 +194,6 @@ We can edit `/etc/pam.d/common-auth` to achieve this (and also add a 10 seconds 
 
 ## Voilà!
 
-![ez-ssh-bot](https://user-images.githubusercontent.com/7307454/199520947-0c7dd8ba-807c-4e84-a17a-620936c4b2a1.gif)
-
+External SSH Login |   | External SSH Login Failed
+-------------------|---|---------------------------
+<img src="https://user-images.githubusercontent.com/7307454/199520947-0c7dd8ba-807c-4e84-a17a-620936c4b2a1.gif" alt="ez-ssh-bot-success-demo">  | | <img src="https://user-images.githubusercontent.com/7307454/220659774-1febd1c7-43cc-4458-afcb-6c7789c973bc.gif" alt="ez-ssh-bot-fail-demo" width="256">
