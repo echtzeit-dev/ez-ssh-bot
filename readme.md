@@ -6,10 +6,10 @@ SSH Reverse Tunnel with Login Notifications via Telegram Bot
 
 ## Create a Telegram bot
 
-Contact [@BotFather](https://t.me/botfather) on Telegram and type `/start`. Then follow instructions to create a bot and get an access token. The token will look like this: `4098346289:YUI_OLIJi98y78078yyhi7ovghjoTGniuss`. It grants full control over your bot, so keep it private.
+We contact [@BotFather](https://t.me/botfather) on Telegram and type `/start`. Then we follow the instructions to create a bot and get an access token. The token will look like this: `4098346289:YUI_OLIJi98y78078yyhi7ovghjoTGniuss`. It grants full control over our bot, so we must keep it private.
 
-Now create a new Telegram channel and add your bot as a member, so it can send messages to the channel. Now post a "test" message from your own account and navigate to this page to find the channel ID:
-[https://api.telegram.org/bot&lt;bot-access-token&gt;/getUpdates](https://api.telegram.org/bot4098346289:YUI_OLIJi98y78078yyhi7ovghjoTGniuss/getUpdates) and then find the channel ID in field `result/message/chat/id` of the returned JSON:
+Now we have to create a new Telegram channel and add our bot as a member, so it can send messages to the channel. Let's post a "test" message from our own account and navigate to this page to find the channel ID:
+[https://api.telegram.org/bot&lt;bot-access-token&gt;/getUpdates](https://api.telegram.org/bot4098346289:YUI_OLIJi98y78078yyhi7ovghjoTGniuss/getUpdates). We find the channel ID in field `result/message/chat/id` of the returned JSON:
 
 ```json
 {
@@ -40,27 +40,33 @@ Now create a new Telegram channel and add your bot as a member, so it can send m
 }
 ```
 
-Enter both, your bot-token and channel ID in the `ez-ssh-bot.sh` script in this repo. Then test your bot with the script:
-```shell
-> export PAM_TYPE=open_session
-> export PAM_RHOST=127.0.0.1
-> ./ez-ssh-bot.sh
+We enter both, our bot-token and channel ID in the `ez-ssh-bot` scripts in this repo:
+```
+CHAT_ID=<our channel ID>
+BOT_TOKEN=<our bot-token>
+message="$(date +"%Y-%m-%d, %A %R")"$'\n'"External SSH Login Failed: $PAM_USER@$(hostname)"
 ```
 
-You should receive a "External SSH Login" message in your Telegram channel now. Once that works, copy the script to `/etc/ssh` and restrict access:
+We can test our bot like this:
 ```shell
-> sudo cp ez-ssh-bot.sh /etc/ssh/.
-> sudo chown root /etc/ssh/ez-ssh-bot.sh
-> sudo chmod 100 /etc/ssh/ez-ssh-bot.sh
+> PAM_RHOST=127.0.0.1 PAM_TYPE=open_session ./ez-ssh-bot-success.sh
+> PAM_RHOST=127.0.0.1 PAM_TYPE=auth ./ez-ssh-bot-fail.sh
+```
+
+In our Telegram channel we should receive two messages &mdash; one "External SSH Login" and one "External SSH Login Failed". Once that works, we copy the scripts to `/etc/ssh` and restrict access:
+```shell
+> sudo cp ez-ssh-bot-*.sh /etc/ssh/.
+> sudo chown root /etc/ssh/ez-ssh-bot-*.sh
+> sudo chmod 100 /etc/ssh/ez-ssh-bot-*.sh
 ```
 
 ## Set up a free AWS EC2 Instance
 
-This article will guide you through the configuration step by step &mdash; remember your elastic IP address and where you saved the `.pem` file from your key pair: https://www.opensourceforu.com/2021/09/how-to-do-reverse-tunnelling-with-the-amazon-ec2-instance/
+This article guides through the configuration step by step &mdash; we must remember our elastic IP address and where we saved the `.pem` file from our key pair: https://www.opensourceforu.com/2021/09/how-to-do-reverse-tunnelling-with-the-amazon-ec2-instance/
 
 ## Create a dedicated user for AutoSSH
 
-Create the user, set a password, copy over the `.pem` file for your EC2 instance and make sure the `known_hosts` file exists:
+Let's create a dedicated user, set a password, copy over the `.pem` file for our EC2 instance and make sure the `known_hosts` file exists:
 ```shell
 > sudo useradd -m ez-ssh-bot
 > sudo passwd ez-ssh-bot
@@ -72,7 +78,7 @@ Create the user, set a password, copy over the `.pem` file for your EC2 instance
 > sudo chown ez-ssh-bot /home/ez-ssh-bot/.ssh/known_hosts
 ```
 
-Switch to the new user once in order to test the SSH connection and confirm the server fingerprint. Here you will need the elastic IP address of your EC2 instance:
+We switch to the new user once in order to test the SSH connection and confirm the server fingerprint. Here we need the elastic IP address of our EC2 instance:
 ```shell
 > su - ez-ssh-bot
 Password: ...
@@ -96,12 +102,17 @@ This account is currently not available.
 
 ## Create a Systemd service for AutoSSH
 
-We will run AutoSSH in Systemd, which takes care of starting it after boot and restarting it in case of failures. Enter your elastic IP in the `ez-ssh-bot.service` in this repo and copy it to the Systemd services folder:
+We use AutoSSH to maintain the reverse SSH tunnel connection from our local workstation to the public EC2 instance. SSH connections to the respective port of the EC instance will then be forwarded to our local workstation through the reverse tunnel.  We use Systemd to take care of starting AutoSSH after boot and restarting it in case of failures.
+
+First, we enter our elastic IP in the `ez-ssh-bot.service` in this repo and copy it to the Systemd system services folder:
 ```shell
+> grep "<elastic IP>" ez-ssh-bot.service
+ExecStart=/usr/bin/autossh -M 0 -N -f -q -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/ez-ssh-bot.pem -R 9033:localhost:22 ec2-user@<elastic IP>
+
 > sudo cp ez-ssh-bot.service /etc/systemd/system/.
 ```
 
-You might have to install packages like `autossh`. Then reload all units from disk, start the service and check its status:
+Let's make sure we have the `autossh` package installed. Then we reload all units from disk, start the service and check its status:
 ```shell
 > sudo apt install autossh
 > sudo systemctl daemon-reload
@@ -125,23 +136,60 @@ Nov 02 13:23:42 i7ubuntu systemd[1]: Started SSH Reverse Tunnel with Login Notif
 Nov 02 13:23:42 i7ubuntu autossh[2337706]: ssh child pid is 2337707
 ```
 
-You should now be able to ssh into your local user account through your EC2 instance:
+We can now SSH into our local workstation from remote through our EC2 instance 🙌
 ```shell
 > ssh -i /path/to/private/ec2-key.pem -p 9033 user@<elastic IP>
 ```
 
-Once that works, let Systemd start the AutoSSH service automatically at boot-time:
+Once that works, let Systemd start our service automatically at boot-time:
 ```shell
 > sudo systemctl enable ez-ssh-bot
 ```
 
-## Add a PAM step to send the notification
+## Add a PAM steps to send notifications
 
-Just add an entry for the `ez-ssh-bot.sh` script after `@include common-session` in `/etc/pam.d/sshd`:
-```shell
-> grep ez-ssh-bot /etc/pam.d/sshd
-# Send a login notification to Telegram via ez-ssh-bot
-session required pam_exec.so seteuid /etc/ssh/ez-ssh-bot.sh
+Let's connect the remaining pieces. 
+The `/etc/ssh/ez-ssh-bot-success.sh` script sends a "External SSH Login" messsage for logins that originate from the reverse SSH tunnel.
+We want to run it whenever a login attempt succeeded.
+We can edit `/etc/pam.d/sshd` to achieve this:
+
+```diff
+--- a/etc/pam.d/sshd
++++ b/etc/pam.d/sshd
+@@ -27,6 +27,9 @@ session    optional     pam_keyinit.so force revoke
+ # Standard Un*x session setup and teardown.
+ @include common-session
+ 
++# Send a login notification to Telegram via ez-ssh-bot
++session    optional     pam_exec.so seteuid /etc/ssh/ez-ssh-bot-success.sh
++
+ # Print the message of the day upon successful login.
+ # This includes a dynamically generated part from /run/motd.dynamic
+ # and a static (admin-editable) part from /etc/motd.
+```
+
+The `/etc/ssh/ez-ssh-bot-fail.sh` script sends a "External SSH Login Failed" messsage for logins that originate from the reverse SSH tunnel.
+So, we want to run it whenever a login attempt failed.
+We can edit `/etc/pam.d/common-auth` to achieve this (and also add a 10 seconds delay for failed login attempts):
+
+```diff
+--- a/etc/pam.d/common-auth
++++ b/etc/pam.d/common-auth
+@@ -14,10 +14,12 @@
+ # pam-auth-update(8) for details.
+ 
+ # here are the per-package modules (the "Primary" block)
+-auth   [success=1 default=ignore]      pam_unix.so nullok
++auth   [success=3 default=ignore]      pam_unix.so nullok
+ 
+ # here's the fallback if no module succeeds
+-auth   requisite                       pam_deny.so
++auth   optional                        pam_exec.so seteuid /etc/ssh/ez-ssh-bot-fail.sh
++auth   optional                        pam_faildelay.so delay=10000000
++auth   requisite                       pam_deny.so
+ 
+ # prime the stack with a positive return value if there isn't one already;
+ # this avoids us returning an error just because nothing sets a success code
 ```
 
 ## Voilà!
