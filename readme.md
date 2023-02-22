@@ -146,7 +146,7 @@ Once that works, let Systemd start our service automatically at boot-time:
 > sudo systemctl enable ez-ssh-bot
 ```
 
-## Add a PAM steps to send notifications
+## Add PAM steps to send notifications
 
 Let's connect the remaining pieces. 
 The `/etc/ssh/ez-ssh-bot-success.sh` script sends a "External SSH Login" messsage for logins that originate from the reverse SSH tunnel.
